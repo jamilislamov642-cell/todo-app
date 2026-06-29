@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📝 Todo Master - Professional Task Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --success: #48bb78;
+            --danger: #f56565;
+            --warning: #ed8936;
+            --info: #4299e1;
+            --light: #f7fafc;
+            --dark: #2d3748;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s ease;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* ============ LOADING SCREEN ============ */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ============ NAVBAR ============ */
+        nav {
+            background: white;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: none;
+        }
+
+        nav.visible {
+            display: block;
+        }
+
+        .navbar {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .logout-btn {
+            padding: 0.6rem 1.5rem;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+        }
+
+        /* ============ AUTH SECTION ============ */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .auth-box {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 450px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .auth-box h1 {
+            text-align: center;
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 20px;
+        }
+
+        .auth-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .toggle-auth {
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .toggle-auth button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .toggle-auth button:hover {
+            color: var(--primary-dark);
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* ============ MAIN APP ============ */
+        .app-container {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .app-container.visible {
+            display: block;
+        }
+
+        .content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .app-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 200px;
+        }
+
+        .stat-icon {
+            font-size: 28px;
+        }
+
+        .stat-content h3 {
+            color: var(--dark);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-content p {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow-lg);
+            padding: 30px;
+            animation: slideUp 0.5s ease;
+        }
+
+        .card h2 {
+            color: var(--dark);
+            margin-bottom: 25px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ============ ADD TODO FORM ============ */
+        .form-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            transition: var(--transition);
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ============ TODO LIST ============ */
+        .todos-list {
+            display: grid;
+            gap: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .todos-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .todos-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .todos-list::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .todos-list::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        .todo-item {
+            background: #f8f9fa;
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            transition: var(--transition);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .todo-item:hover {
+            box-shadow: var(--shadow);
+            transform: translateX(5px);
+        }
+
+        .todo-item.done {
+            background: #f0fdf4;
+            border-left-color: var(--success);
+            opacity: 0.7;
+        }
+
+        .todo-item.done .todo-title {
+            text-decoration: line-through;
+            color: #718096;
+        }
+
+        .todo-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: var(--primary);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .todo-content {
+            flex: 1;
+        }
+
+        .todo-title {
+            color: var(--dark);
+            font-weight: 600;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+
+        .todo-description {
+            color: #718096;
+            font-size: 13px;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+
+        .todo-meta {
+            font-size: 11px;
+            color: #a0aec0;
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .delete-btn {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .delete-btn:hover {
+            background: #fc8181;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .edit-btn {
+            background: #bee3f8;
+            color: #2c5aa0;
+        }
+
+        .edit-btn:hover {
+            background: #90cdf4;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0aec0;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* ============ FILTER & SORT ============ */
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border);
+            background: white;
+            color: var(--dark);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: var(--transition);
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        /* ============ MODAL ============ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 500px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 25px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .modal-btn-secondary {
+            background: var(--border);
+            color: var(--dark);
+        }
+
+        .modal-btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .app-stats {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+
+            .logo {
+                font-size: 20px;
+            }
+
+            .nav-right {
+                gap: 10px;
+            }
+
+            .user-info {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 5px;
+            }
+
+            .user-email {
+                font-size: 12px;
+            }
+
+            .app-title {
+                font-size: 28px;
+            }
+
+            .content {
+                padding: 20px 15px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .app-stats {
+                flex-direction: column;
+            }
+
+            .stat-card {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .filter-section {
+                flex-direction: column;
+            }
+
+            .filter-btn {
+                width: 100%;
+            }
+
+            .modal-content {
+                padding: 25px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-box {
+                padding: 30px 20px;
+            }
+
+            .app-title {
+                font-size: 24px;
+            }
+
+            .stat-card {
+                padding: 12px 15px;
+            }
+
+            .stat-content h3 {
+                font-size: 10px;
+            }
+
+            .stat-content p {
+                font-size: 20px;
+            }
+
+            .todo-item {
+                flex-direction: column;
+            }
+
+            .todo-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader">
+            <div class="spinner"></div>
+            <div class="loader-text">LOADING...</div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav id="navbar">
+        <div class="navbar">
+            <div class="logo">📝 Todo Master</div>
+            <div class="nav-right">
+                <div class="user-info">
+                    <span class="user-email" id="userEmail">user@example.com</span>
+                    <div class="user-avatar" id="userAvatar">U</div>
+                </div>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Auth Section -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <h1 id="authTitle">🔐 Login</h1>
+            <p class="auth-subtitle" id="authSubtitle">Sign in to manage your tasks</p>
+            <div class="error-message" id="errorMessage"></div>
+
+            <form id="authForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="••••••••">
+                </div>
+                <button type="submit" class="auth-btn" id="authSubmitBtn">Login</button>
+            </form>
+
+            <div class="toggle-auth">
+                <span id="toggleText">Don't have an account?</span>
+                <button type="button" id="toggleAuthBtn">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <div class="content">
+            <!-- Header -->
+            <div class="app-header">
+                <div class="app-title">📝 My Awesome Tasks</div>
+                <div class="app-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-content">
+                            <h3>Total Tasks</h3>
+                            <p id="totalTasks">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <h3>Completed</h3>
+                            <p id="completedTasks">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-content">
+                            <h3>Remaining</h3>
+                            <p id="remainingTasks">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Layout -->
+            <div class="main-layout">
+                <!-- Add Todo Card -->
+                <div class="card">
+                    <h2>➕ Add New Task</h2>
+                    <form id="addTodoForm" class="form-grid">
+                        <div class="form-group">
+                            <label for="todoTitle">Task Title</label>
+                            <input type="text" id="todoTitle" placeholder="What needs to be done?" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="todoDescription">Description (Optional)</label>
+                            <textarea id="todoDescription" placeholder="Add more details about your task..."></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">
+                            <span>➕</span>
+                            <span>Add Task</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Todos List Card -->
+                <div class="card">
+                    <h2>📌 Your Tasks</h2>
+                    <div class="filter-section">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="active">Active</button>
+                        <button class="filter-btn" data-filter="completed">Completed</button>
+                    </div>
+                    <div class="todos-list" id="todosList">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🎉</div>
+                            <p>No tasks yet!</p>
+                            <p style="font-size: 12px;">Add your first task to get started 🚀</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Todo Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">✏️ Edit Task</div>
+            <form id="editForm" class="form-grid">
+                <div class="form-group">
+                    <label for="editTodoTitle">Task Title</label>
+                    <input type="text" id="editTodoTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="editTodoDescription">Description</label>
+                    <textarea id="editTodoDescription"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="modal-btn modal-btn-secondary" id="cancelEditBtn">Cancel</button>
+                    <button type="submit" class="modal-btn modal-btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ============ CONFIG ============
+        const API_URL = 'http://localhost:8000/api';
+        
+        // ============ STATE ============
+        let currentUser = null;
+        let currentToken = null;
+        let todos = [];
+        let currentFilter = 'all';
+        let editingTodoId = null;
+        let isLoading = false;
+        let isAuthLoading = false;
+
+        // ============ DOM ELEMENTS ============
+        const loadingScreen = document.getElementById('loadingScreen');
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        const navbar = document.getElementById('navbar');
+        const authForm = document.getElementById('authForm');
+        const toggleAuthBtn = document.getElementById('toggleAuthBtn');
+        const authTitle = document.getElementById('authTitle');
+        const authSubtitle = document.getElementById('authSubtitle');
+        const toggleText = document.getElementById('toggleText');
+        const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const userEmail = document.getElementById('userEmail');
+        const userAvatar = document.getElementById('userAvatar');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const addTodoForm = document.getElementById('addTodoForm');
+        const todoTitle = document.getElementById('todoTitle');
+        const todoDescription = document.getElementById('todoDescription');
+        const todosList = document.getElementById('todosList');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const editModal = document.getElementById('editModal');
+        const editForm = document.getElementById('editForm');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const editTodoTitle = document.getElementById('editTodoTitle');
+        const editTodoDescription = document.getElementById('editTodoDescription');
+        const totalTasksEl = document.getElementById('totalTasks');
+        const completedTasksEl = document.getElementById('completedTasks');
+        const remainingTasksEl = document.getElementById('remainingTasks');
+
+        let isLogin = true;
+
+        // ============ INITIALIZATION ============
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                if (token && user) {
+                    currentToken = token;
+                    currentUser = JSON.parse(user);
+                    showApp();
+                    fetchTodos();
+                } else {
+                    showAuth();
+                }
+            }, 800);
+        });
+
+        // ============ AUTH FUNCTIONS ============
+        function showAuth() {
+            authContainer.style.display = 'flex';
+            appContainer.classList.remove('visible');
+            navbar.classList.remove('visible');
+            errorMessage.classList.remove('show');
+        }
+
+        function showApp() {
+            authContainer.style.display = 'none';
+            appContainer.classList.add('visible');
+            navbar.classList.add('visible');
+            updateUserInfo();
+        }
+
+        function updateUserInfo() {
+            if (currentUser) {
+                userEmail.textContent = currentUser.email;
+                userAvatar.textContent = currentUser.email.charAt(0).toUpperCase();
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = '❌ ' + message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 4000);
+        }
+
+        function toggleAuthMode() {
+            isLogin = !isLogin;
+            if (isLogin) {
+                authTitle.textContent = '🔐 Login';
+                authSubtitle.textContent = 'Sign in to manage your tasks';
+                toggleText.textContent = "Don't have an account?";
+                toggleAuthBtn.textContent = 'Register';
+                confirmPasswordGroup.style.display = 'none';
+                authSubmitBtn.textContent = 'Login';
+                authForm.reset();
+            } else {
+                authTitle.textContent = '🎉 Register';
+                authSubtitle.textContent = 'Create your account to get started';
+                toggleText.textContent = 'Already have an account?';
+                toggleAuthBtn.textContent = 'Login';
+                confirmPasswordGroup.style.display = 'block';
+                authSubmitBtn.textContent = 'Register';
+                authForm.reset();
+            }
+            errorMessage.classList.remove('show');
+        }
+
+        toggleAuthBtn.addEventListener('click', toggleAuthMode);
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            
+            if (!email || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            if (!isLogin && password !== confirmPasswordInput.value) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            isAuthLoading = true;
+            authSubmitBtn.disabled = true;
+            authSubmitBtn.textContent = isLogin ? '⏳ Logging in...' : '⏳ Creating account...';
+
+            try {
+                const endpoint = isLogin ? '/auth/login' : '/auth/register';
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Authentication failed');
+                }
+
+                currentToken = data.access_token;
+                currentUser = data.user;
+                localStorage.setItem('token', currentToken);
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                
+                authForm.reset();
+                showApp();
+                fetchTodos();
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                isAuthLoading = false;
+                authSubmitBtn.disabled = false;
+                authSubmitBtn.textContent = isLogin ? 'Login' : 'Register';
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            currentToken = null;
+            currentUser = null;
+            todos = [];
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            isLogin = true;
+            authTitle.textContent = '🔐 Login';
+            authSubtitle.textContent = 'Sign in to manage your tasks';
+            toggleText.textContent = "Don't have an account?";
+            toggleAuthBtn.textContent = 'Register';
+            confirmPasswordGroup.style.display = 'none';
+            authSubmitBtn.textContent = 'Login';
+            showAuth();
+        });
+
+        // ============ TODO FUNCTIONS ============
+        async function fetchTodos() {
+            if (!currentToken) return;
+            
+            isLoading = true;
+            try {
+                const response = await fetch(`${API_URL}/todos`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch todos');
+                
+                todos = await response.json();
+                renderTodos();
+                updateStats();
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to load tasks');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        async function addTodo() {
+            const title = todoTitle.value.trim();
+            const description = todoDescription.value.trim();
+
+            if (!title) {
+                showError('Please enter a task title');
+                return;
+            }
+
+            isLoading = true;
+            authSubmitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/todos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({ title, description, done: false })
+                });
+
+                if (!response.ok) throw new Error('Failed to add todo');
+
+                const newTodo = await response.json();
+                todos.push(newTodo);
+                todoTitle.value = '';
+                todoDescription.value = '';
+                renderTodos();
+                updateStats();
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to add task');
+            } finally {
+                isLoading = false;
+                authSubmitBtn.disabled = false;
+            }
+        }
+
+        async function deleteTodo(id) {
+            if (!confirm('Are you sure you want to delete this task?')) return;
+
+            isLoading = true;
+            try {
+                const response = await fetch(`${API_URL}/todos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to delete todo');
+
+                todos = todos.filter(t => t.id !== id);
+                renderTodos();
+                updateStats();
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to delete task');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        async function toggleTodo(id, done) {
+            isLoading = true;
+            try {
+                const response = await fetch(`${API_URL}/todos/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({ done })
+                });
+
+                if (!response.ok) throw new Error('Failed to update todo');
+
+                const updated = await response.json();
+                todos = todos.map(t => t.id === id ? updated : t);
+                renderTodos();
+                updateStats();
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to update task');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function openEditModal(todo) {
+            editingTodoId = todo.id;
+            editTodoTitle.value = todo.title;
+            editTodoDescription.value = todo.description || '';
+            editModal.classList.add('show');
+        }
+
+        async function saveTodoEdit() {
+            const title = editTodoTitle.value.trim();
+            const description = editTodoDescription.value.trim();
+
+            if (!title) {
+                showError('Task title cannot be empty');
+                return;
+            }
+
+            isLoading = true;
+            try {
+                const response = await fetch(`${API_URL}/todos/${editingTodoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({ title, description })
+                });
+
+                if (!response.ok) throw new Error('Failed to update todo');
+
+                const updated = await response.json();
+                todos = todos.map(t => t.id === editingTodoId ? updated : t);
+                renderTodos();
+                updateStats();
+                closeEditModal();
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to update task');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function closeEditModal() {
+            editModal.classList.remove('show');
+            editingTodoId = null;
+            editForm.reset();
+        }
+
+        function renderTodos() {
+            const filteredTodos = todos.filter(todo => {
+                if (currentFilter === 'active') return !todo.done;
+                if (currentFilter === 'completed') return todo.done;
+                return true;
+            });
+
+            if (filteredTodos.length === 0) {
+                todosList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎉</div>
+                        <p>${currentFilter === 'all' ? 'No tasks yet!' : `No ${currentFilter} tasks!`}</p>
+                        <p style="font-size: 12px;">Add a new task to get started 🚀</p>
+                    </div>
+                `;
+                return;
+            }
+
+            todosList.innerHTML = filteredTodos.map(todo => {
+                const date = new Date(todo.created_at).toLocaleDateString();
+                return `
+                    <div class="todo-item ${todo.done ? 'done' : ''}" data-id="${todo.id}">
+                        <input
+                            type="checkbox"
+                            class="todo-checkbox"
+                            ${todo.done ? 'checked' : ''}
+                            onchange="toggleTodo(${todo.id}, this.checked)"
+                        >
+                        <div class="todo-content">
+                            <div class="todo-title">${escapeHtml(todo.title)}</div>
+                            ${todo.description ? `<div class="todo-description">${escapeHtml(todo.description)}</div>` : ''}
+                            <div class="todo-meta">📅 ${date}</div>
+                        </div>
+                        <div class="todo-actions">
+                            <button class="action-btn edit-btn" onclick="openEditModal({id: ${todo.id}, title: '${escapeHtml(todo.title).replace(/'/g, "\\'")}'${todo.description ? `, description: '${escapeHtml(todo.description).replace(/'/g, "\\'")}` : `, description: ''`}})">
+                                ✏️ Edit
+                            </button>
+                            <button class="action-btn delete-btn" onclick="deleteTodo(${todo.id})">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const total = todos.length;
+            const completed = todos.filter(t => t.done).length;
+            const remaining = total - completed;
+
+            totalTasksEl.textContent = total;
+            completedTasksEl.textContent = completed;
+            remainingTasksEl.textContent = remaining;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // ============ EVENT LISTENERS ============
+        addTodoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            addTodo();
+        });
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderTodos();
+            });
+        });
+
+        cancelEditBtn.addEventListener('click', closeEditModal);
+        editForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveTodoEdit();
+        });
+
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) closeEditModal();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeEditModal();
+        });
+    </script>
+</body>
+</html>
